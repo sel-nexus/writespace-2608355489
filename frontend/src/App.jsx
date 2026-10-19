@@ -11,6 +11,8 @@ import RegisterPage from './pages/RegisterPage';
 import Home from './pages/Home';
 import ReadBlog from './pages/ReadBlog';
 import WriteBlog from './pages/WriteBlog';
+import AdminDashboard from './pages/AdminDashboard';
+import UserManagement from './pages/UserManagement';
 import { buttonStyles, displayFont } from './utils/styles';
 
 /** Render discovery, fail-closed guards and role navigation with local React state.
@@ -70,8 +72,8 @@ export default function App() {
           <Route path="/edit/:id" element={<WriteBlog session={session} editing />} />
         </Route>
         <Route element={<ProtectedRoute session={session} adminOnly />}>
-          <Route path="/admin" element={recoverableContent} />
-          <Route path="/users" element={recoverableContent} />
+          <Route path="/admin" element={<AdminDashboard session={session} />} />
+          <Route path="/users" element={<UserManagement session={session} />} />
         </Route>
         <Route path="*" element={recoverableContent} />
       </Routes>
