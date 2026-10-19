@@ -48,13 +48,18 @@ describe('BlogCard', () => {
   it.each([
     ['admin', 'other', true], ['user', 'user-1', true], ['user', 'other', false],
   ])('shows edit for role %s and identity %s only when allowed', (role, userId, allowed) => {
-    renderCard({ session: { role, userId } });
+    renderCard({ session: { role, userId, username: 'demo', displayName: 'Demo Writer' } });
     const edit = screen.queryByRole('link', { name: `Edit ${post.title}` });
     if (allowed) {
       expect(edit).toHaveAttribute('href', '/edit/post-1');
     } else {
       expect(edit).not.toBeInTheDocument();
     }
+  });
+
+  it('denies edit controls for incomplete sessions even when the author matches', () => {
+    renderCard({ session: { role: 'user', userId: post.authorId } });
+    expect(screen.queryByRole('link', { name: `Edit ${post.title}` })).not.toBeInTheDocument();
   });
 
   it('encodes route IDs and treats markup as text, never executable HTML', () => {

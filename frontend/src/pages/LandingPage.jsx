@@ -1,5 +1,7 @@
 /** Introduce browser-local writing and preview only real persisted posts. */
 import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
+import { isValidSession } from '../utils/auth';
 import { Link } from 'react-router-dom';
 import { BlogCard } from '../components/BlogCard';
 import { getPosts } from '../utils/storage';
@@ -9,7 +11,7 @@ import { buttonStyles, displayFont, focusRing } from '../utils/styles';
  * @returns {JSX.Element} Hero, features, latest posts, and public footer.
  * Notes: No posts are seeded; unavailable storage produces the same safe empty state.
  */
-export default function LandingPage() {
+export default function LandingPage({ session = null }) {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function LandingPage() {
                 <Link to="/register" className={buttonStyles.primary}>
                   Get Started Free
                 </Link>
-                <Link to="/login" className={buttonStyles.secondary}>
+                <Link to={isValidSession(session) ? '/blogs' : '/login'} className={buttonStyles.secondary}>
                   Start Reading
                 </Link>
               </div>
@@ -172,3 +174,5 @@ export default function LandingPage() {
     </>
   );
 }
+
+LandingPage.propTypes = { session: PropTypes.object };

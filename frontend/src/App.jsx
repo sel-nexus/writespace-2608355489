@@ -8,6 +8,9 @@ import { PublicNavbar } from './components/PublicNavbar';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import Home from './pages/Home';
+import ReadBlog from './pages/ReadBlog';
+import WriteBlog from './pages/WriteBlog';
 import { buttonStyles, displayFont } from './utils/styles';
 
 /** Render discovery, fail-closed guards and role navigation with local React state.
@@ -47,7 +50,7 @@ export default function App() {
         <Navbar session={session} onSessionChange={refreshSession} />
       )}
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<LandingPage session={session} />} />
         <Route
           path="/login"
           element={session
@@ -61,9 +64,10 @@ export default function App() {
             : <RegisterPage onSessionChange={refreshSession} />}
         />
         <Route element={<ProtectedRoute session={session} />}>
-          {['/blogs', '/blog/:id', '/write', '/edit/:id'].map((path) => (
-            <Route key={path} path={path} element={recoverableContent} />
-          ))}
+          <Route path="/blogs" element={<Home session={session} />} />
+          <Route path="/blog/:id" element={<ReadBlog session={session} />} />
+          <Route path="/write" element={<WriteBlog session={session} />} />
+          <Route path="/edit/:id" element={<WriteBlog session={session} editing />} />
         </Route>
         <Route element={<ProtectedRoute session={session} adminOnly />}>
           <Route path="/admin" element={recoverableContent} />

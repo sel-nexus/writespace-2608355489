@@ -2,20 +2,19 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { displayFont, focusRing } from '../utils/styles';
+import { Avatar } from './Avatar';
+import { canManagePost, formatPostDate, getAuthorRole } from '../utils/posts';
 
 const accents = ['border-indigo-500', 'border-violet-500', 'border-pink-500', 'border-teal-500'];
 
 /** Render the first 120 characters, author, and UTC publication date.
  * @param {object} props Post, display order, and optional current session.
  * @returns {JSX.Element} Linked card; edit is visible only to owners or admins.
- * Notes: Edit visibility is not a security boundary; later routes enforce ownership.
+ * Notes: Client-side controls are demo behavior; mutation helpers also enforce ownership.
  */
 export function BlogCard({ post, index = 0, session = null }) {
-  const canEdit = session?.role === 'admin'
-    || (session?.role === 'user' && session.userId === post.authorId);
-  const date = new Intl.DateTimeFormat('en-US', {
-    month: 'short', day: '2-digit', year: 'numeric', timeZone: 'UTC',
-  }).format(new Date(post.createdAt));
+  const canEdit = canManagePost(session, post);
+  const date = formatPostDate(post.createdAt);
 
   return (
     <article
@@ -34,9 +33,12 @@ export function BlogCard({ post, index = 0, session = null }) {
         {post.content.length > 120 ? '…' : ''}
       </p>
       <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-6">
-        <p className="break-words text-sm font-medium text-slate-700">
-          By {post.authorName}
-        </p>
+        <div className="flex min-w-0 items-center gap-3">
+          <Avatar role={getAuthorRole(post)} />
+          <p className="break-words text-sm font-medium text-slate-700">
+            By {post.authorName}
+          </p>
+        </div>
         {canEdit && (
           <Link
             to={`/edit/${encodeURIComponent(post.id)}`}
