@@ -34,9 +34,8 @@ test('guest entry points and empty discovery remain navigable', async ({ page })
   await expect(page).toHaveURL(/\/register$/);
   await publicNav.getByRole('link', { name: 'WriteSpace.' }).click();
   const footer = page.getByRole('navigation', { name: 'Footer navigation' });
-  for (const [name, route] of [['All Blogs', '/blogs'], ['Login', '/login'], ['Register', '/register']]) {
+  for (const [name, route] of [['All Blogs', '/login'], ['Login', '/login'], ['Register', '/register']]) {
     await footer.getByRole('link', { name, exact: true }).click();
-    // Parent updates All Blogs to the exact login redirect when guards are wired.
     await expect(page).toHaveURL(new RegExp(`${route}$`));
     await publicNav.getByRole('link', { name: 'WriteSpace.' }).click();
   }
@@ -65,8 +64,7 @@ test('real stored posts show newest three and persist after link navigation', as
   await expect(latest.getByText('Feb 04, 2025')).toBeVisible();
   await expect(page.getByRole('complementary').getByRole('link', { name: 'Browser story 4' })).toBeVisible();
   await latest.getByRole('link', { name: 'Browser story 4' }).click();
-  // Parent changes this exact destination to /login when the reader guard is wired.
-  await expect(page).toHaveURL(/\/blog\/local-4$/);
+  await expect(page).toHaveURL(/\/login$/);
   await page.getByRole('navigation', { name: 'Public navigation' }).getByRole('link', { name: 'WriteSpace.' }).click();
   await expect(latest.getByRole('heading', { level: 3 })).toHaveText([
     'Browser story 4', 'Browser story 3', 'Browser story 2',
