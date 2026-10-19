@@ -6,6 +6,8 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { getRoleHome, getSession } from './utils/auth';
 import { PublicNavbar } from './components/PublicNavbar';
 import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import { buttonStyles, displayFont } from './utils/styles';
 
 /** Render discovery, fail-closed guards and role navigation with local React state.
@@ -46,9 +48,18 @@ export default function App() {
       )}
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        {['/login', '/register'].map((path) => (
-          <Route key={path} path={path} element={session ? <Navigate to={getRoleHome(session)} replace /> : recoverableContent} />
-        ))}
+        <Route
+          path="/login"
+          element={session
+            ? <Navigate to={getRoleHome(session)} replace />
+            : <LoginPage onSessionChange={refreshSession} />}
+        />
+        <Route
+          path="/register"
+          element={session
+            ? <Navigate to={getRoleHome(session)} replace />
+            : <RegisterPage onSessionChange={refreshSession} />}
+        />
         <Route element={<ProtectedRoute session={session} />}>
           {['/blogs', '/blog/:id', '/write', '/edit/:id'].map((path) => (
             <Route key={path} path={path} element={recoverableContent} />

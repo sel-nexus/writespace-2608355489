@@ -86,8 +86,8 @@ describe('LandingPage', () => {
     const link = screen.getByRole('link', { name, exact: true });
     expect(link).toHaveAttribute('href', path);
     await user.click(link);
-    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeVisible();
-    await user.click(screen.getByRole('link', { name: 'Back to Home' }));
+    expect(screen.getByRole('heading', { name: path === '/login' ? 'Welcome back' : 'Create your account' })).toBeVisible();
+    await user.click(within(screen.getByRole('navigation', { name: 'Public navigation' })).getByRole('link', { name: 'WriteSpace.' }));
     expect(screen.getByRole('heading', { name: 'Latest from the Blog' })).toBeVisible();
   });
 
@@ -104,7 +104,7 @@ describe('LandingPage', () => {
     }
     await userEvent.setup().click(within(screen.getByRole('region', { name: 'Latest from the Blog' }))
       .getByRole('link', { name: 'Story 1' }));
-    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
   });
 });
 
