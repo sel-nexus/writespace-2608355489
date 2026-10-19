@@ -31,10 +31,15 @@ export function UserRow({ account, currentUserId, onDelete, mobile = false }) {
   const action = (
     <span title={reason || undefined} className="inline-flex">
       <button
-        type="button" disabled={Boolean(reason)} title={reason || undefined}
-        aria-label={`Delete ${account.username}`} onClick={() => { if (!reason) onDelete(account); }}
+        type="button"
+        disabled={Boolean(reason)}
+        title={reason || undefined}
+        aria-label={`Delete ${account.username}`}
+        onClick={() => { if (!reason) onDelete(account); }}
         className={`${buttonStyles.destructive} disabled:cursor-not-allowed disabled:opacity-60`}
-      >Delete</button>
+      >
+        Delete
+      </button>
     </span>
   );
   if (mobile) {
@@ -42,9 +47,18 @@ export function UserRow({ account, currentUserId, onDelete, mobile = false }) {
       <article aria-label={`Account ${account.username}`} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
         {identity}
         <dl className="space-y-3 text-sm">
-          <div><dt className="text-slate-500">Username</dt><dd className="break-all">{account.username}</dd></div>
-          <div><dt className="mb-1 text-slate-500">Role</dt><dd>{badge}</dd></div>
-          <div><dt className="text-slate-500">Created</dt><dd>{date}</dd></div>
+          <div>
+            <dt className="text-slate-500">Username</dt>
+            <dd className="break-all">{account.username}</dd>
+          </div>
+          <div>
+            <dt className="mb-1 text-slate-500">Role</dt>
+            <dd>{badge}</dd>
+          </div>
+          <div>
+            <dt className="text-slate-500">Created</dt>
+            <dd>{date}</dd>
+          </div>
         </dl>
         {action}
       </article>

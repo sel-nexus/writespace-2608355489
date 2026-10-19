@@ -85,12 +85,45 @@ export default function UserManagement({ session = null }) {
         <h2 id="create-user-heading" className={`${displayFont} text-2xl`}>Create User</h2>
         <p className="mt-3 text-sm text-slate-600">Passwords are stored in plaintext. Use non-sensitive demo credentials, never a real password.</p>
         <form aria-label="Create User" onSubmit={submit} noValidate className="mt-6 grid gap-5 md:grid-cols-2">
-          <FormField id="displayName" label="Display Name" required value={fields.displayName} error={errors.displayName} onChange={(event) => changeField('displayName', event.target.value)} />
-          <FormField id="username" label="Username" required autoComplete="off" value={fields.username} error={errors.username} onChange={(event) => changeField('username', event.target.value)} />
-          <FormField id="password" label="Password" type="password" required autoComplete="new-password" value={fields.password} error={errors.password} onChange={(event) => changeField('password', event.target.value)} />
+          <FormField
+            id="displayName"
+            label="Display Name"
+            required
+            value={fields.displayName}
+            error={errors.displayName}
+            onChange={(event) => changeField('displayName', event.target.value)}
+          />
+          <FormField
+            id="username"
+            label="Username"
+            required
+            autoComplete="off"
+            value={fields.username}
+            error={errors.username}
+            onChange={(event) => changeField('username', event.target.value)}
+          />
+          <FormField
+            id="password"
+            label="Password"
+            type="password"
+            required
+            autoComplete="new-password"
+            value={fields.password}
+            error={errors.password}
+            onChange={(event) => changeField('password', event.target.value)}
+          />
           <div className="space-y-2">
             <label htmlFor="role" className="block text-sm font-medium">Role *</label>
-            <select id="role" required aria-required="true" aria-invalid={Boolean(errors.role)} aria-describedby={errors.role ? 'role-error' : undefined} value={fields.role} onChange={(event) => changeField('role', event.target.value)} className={fieldStyle}>
+            <select
+              id="role"
+              required
+              aria-required="true"
+              aria-invalid={Boolean(errors.role)}
+              aria-describedby={errors.role ? 'role-error' : undefined}
+              value={fields.role}
+              onChange={(event) => changeField('role', event.target.value)}
+              className={fieldStyle}
+            >
               <option value="">Choose a role</option>
               <option value="admin">Admin</option>
               <option value="user">user</option>
@@ -99,7 +132,13 @@ export default function UserManagement({ session = null }) {
           </div>
           <div className="flex flex-col gap-3 md:col-span-2 md:flex-row">
             <button type="submit" className={buttonStyles.primary}>Create User</button>
-            <button type="button" onClick={() => { setFields(emptyFields); setErrors({}); setError(''); setFeedback(''); }} className={buttonStyles.ghost}>Cancel</button>
+            <button
+              type="button"
+              onClick={() => { setFields(emptyFields); setErrors({}); setError(''); setFeedback(''); }}
+              className={buttonStyles.ghost}
+            >
+              Cancel
+            </button>
           </div>
         </form>
       </section>
@@ -110,12 +149,35 @@ export default function UserManagement({ session = null }) {
         {accounts.length === 1 && <p className="text-slate-500">No registered accounts yet. The built-in admin is always available.</p>}
         <div className="hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white sm:block" aria-label="Desktop accounts">
           <table aria-label="Accounts" className="w-full text-left">
-            <thead className="bg-slate-100 text-sm text-slate-600"><tr>{['Display Name', 'Username', 'Role', 'Created', 'Actions'].map((label) => <th key={label} scope="col" className="px-4 py-3">{label}</th>)}</tr></thead>
-            <tbody>{accounts.map((account) => <UserRow key={account.id} account={account} currentUserId={session.userId} onDelete={removeAccount} />)}</tbody>
+            <thead className="bg-slate-100 text-sm text-slate-600">
+              <tr>
+                {['Display Name', 'Username', 'Role', 'Created', 'Actions'].map((label) => (
+                  <th key={label} scope="col" className="px-4 py-3">{label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {accounts.map((account) => (
+                <UserRow
+                  key={account.id}
+                  account={account}
+                  currentUserId={session.userId}
+                  onDelete={removeAccount}
+                />
+              ))}
+            </tbody>
           </table>
         </div>
         <div aria-label="Mobile accounts" className="space-y-3 sm:hidden">
-          {accounts.map((account) => <UserRow key={account.id} account={account} currentUserId={session.userId} onDelete={removeAccount} mobile />)}
+          {accounts.map((account) => (
+            <UserRow
+              key={account.id}
+              account={account}
+              currentUserId={session.userId}
+              onDelete={removeAccount}
+              mobile
+            />
+          ))}
         </div>
       </section>
     </main>

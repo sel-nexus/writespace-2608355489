@@ -14,15 +14,40 @@ const posts = Array.from({ length: 7 }, (_, index) => ({ id: `post-${index}`, ti
  * @returns {object} Interaction driver.
  */
 function setup(session = admin) {
-  render(<MemoryRouter initialEntries={['/admin']}><Routes>
-    <Route path="/admin" element={<AdminDashboard session={session} />} />
-    <Route path="/write" element={<h1>Write destination</h1>} />
-    <Route path="/users" element={<h1>Users destination</h1>} />
-    <Route path="/edit/:id" element={<h1>Edit destination</h1>} />
-    <Route path="/blog/:id" element={<h1>Read destination</h1>} />
-    <Route path="/blogs" element={<h1>Blogs destination</h1>} />
-    <Route path="/login" element={<h1>Login destination</h1>} />
-  </Routes></MemoryRouter>);
+  render(
+    <MemoryRouter initialEntries={['/admin']}>
+      <Routes>
+        <Route
+          path="/admin"
+          element={<AdminDashboard session={session} />}
+        />
+        <Route
+          path="/write"
+          element={<h1>Write destination</h1>}
+        />
+        <Route
+          path="/users"
+          element={<h1>Users destination</h1>}
+        />
+        <Route
+          path="/edit/:id"
+          element={<h1>Edit destination</h1>}
+        />
+        <Route
+          path="/blog/:id"
+          element={<h1>Read destination</h1>}
+        />
+        <Route
+          path="/blogs"
+          element={<h1>Blogs destination</h1>}
+        />
+        <Route
+          path="/login"
+          element={<h1>Login destination</h1>}
+        />
+      </Routes>
+    </MemoryRouter>,
+  );
   return { user: userEvent.setup() };
 }
 

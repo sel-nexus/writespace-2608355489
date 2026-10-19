@@ -71,6 +71,17 @@ test('register, write, read, reload, feed edit cancel/save and delete reject/acc
   await page.goto('/');
   await registerWriter(page, 'Post Writer');
   await expect(page.getByText('No blogs yet. Be the first to write one!')).toBeVisible();
+  await page.getByRole('region', { name: 'Empty feed' }).getByRole('link', { name: 'Write', exact: true }).click();
+  await expect(page).toHaveURL(/\/write$/);
+  const emptyFeedForm = page.getByRole('form', { name: 'Write New Post', exact: true });
+  await expect(emptyFeedForm).toBeVisible();
+  await emptyFeedForm.getByLabel('Title', { exact: false }).fill('Cancelled empty-feed draft');
+  await emptyFeedForm.getByLabel('Content', { exact: false }).fill('This draft must not be stored.');
+  await emptyFeedForm.getByRole('link', { name: 'Cancel', exact: true }).click();
+  await expect(page).toHaveURL(/\/blogs$/);
+  await expect(page.getByRole('heading', { name: 'All Blogs', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Empty feed' })).toBeVisible();
+  expect(await storedPosts(page)).toEqual([]);
   await page.getByRole('main').getByRole('link', { name: 'Write New Post' }).click();
   await page.getByRole('button', { name: 'Save Post' }).click();
   await expect(page.getByLabel('Title', { exact: false })).toHaveAttribute('aria-invalid', 'true');
@@ -181,6 +192,31 @@ test('initial direct unauthorized edit route redirects to feed without modifying
   expect(await storedPosts(page)).toEqual([original]);
   await page.getByRole('link', { name: 'Another writer', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('initial missing reader route shows not found and returns to feed through the real back link', async ({ page }) => {
+  const errors = captureErrors(page);
+  const original = {
+    id: 'available-post', title: 'Available story', content: 'The feed still has this story.',
+    createdAt: '2025-01-02T00:00:00.000Z', authorId: 'reader', authorName: 'Reader Writer',
+  };
+  // Direct-entry fixture uses real browser storage and a valid authenticated session.
+  await page.addInitScript((post) => {
+    localStorage.setItem('writespace_posts', JSON.stringify([post]));
+    localStorage.setItem('writespace_session', JSON.stringify({
+      userId: 'reader', username: 'reader', displayName: 'Reader Writer', role: 'user',
+    }));
+  }, original);
+  await page.goto('/blog/missing-post');
+  await expect(page).toHaveURL(/\/blog\/missing-post$/);
+  await expect(page.getByRole('heading', { name: 'Post not found', exact: true })).toBeVisible();
+  expect(await storedPosts(page)).toEqual([original]);
+  await page.getByRole('link', { name: 'Back to All Posts', exact: true }).click();
+  await expect(page).toHaveURL(/\/blogs$/);
+  await expect(page.getByRole('heading', { name: 'All Blogs', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'All posts' }).getByRole('link', { name: 'Available story', exact: true })).toBeVisible();
+  expect(await storedPosts(page)).toEqual([original]);
   expect(errors).toEqual([]);
 });
 

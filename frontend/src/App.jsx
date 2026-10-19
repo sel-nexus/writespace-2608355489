@@ -1,9 +1,10 @@
 /** Preserve discovery while wiring browser-local role access and persistent navigation. */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { getRoleHome, getSession } from './utils/auth';
+import { getPosts } from './utils/storage';
 import { PublicNavbar } from './components/PublicNavbar';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -22,6 +23,27 @@ export default function App() {
   const [session, setCurrentSession] = useState(getSession);
   const { pathname } = useLocation();
   const publicPage = ['/', '/login', '/register'].includes(pathname);
+
+  // Refresh the browser tab on SPA navigation, rereading post titles after saves.
+  useEffect(() => {
+    const labels = {
+      '/': 'Home', '/login': 'Login', '/register': 'Register', '/blogs': 'All Blogs',
+      '/write': 'Write New Post', '/admin': 'Admin Dashboard', '/users': 'User Management',
+    };
+    let label = labels[pathname] ?? 'Page not found';
+    const postRoute = pathname.match(/^\/(blog|edit)\/([^/]+)$/);
+    if (postRoute) {
+      let id;
+      try {
+        id = decodeURIComponent(postRoute[2]);
+      } catch {
+        // Malformed encoded IDs have the same recoverable title as missing posts.
+      }
+      const post = getPosts().find((entry) => entry.id === id);
+      label = post ? `${postRoute[1] === 'edit' ? 'Edit: ' : ''}${post.title}` : 'Post not found';
+    }
+    document.title = `${label} | WriteSpace`;
+  }, [pathname]);
 
   /** Reread storage after identity mutations rather than inventing a memory session.
    * @returns {void}

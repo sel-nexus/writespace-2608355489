@@ -25,6 +25,87 @@ async function login(page, username = 'admin', password = 'admin') {
   await page.getByRole('button', { name: 'Login', exact: true }).click();
 }
 
+/** Reveal authenticated links when the responsive hamburger is visible.
+ * @param {import('@playwright/test').Page} page Browser page.
+ * @returns {Promise<void>} Completion of optional mobile disclosure.
+ */
+async function openNavigation(page) {
+  const toggle = page.getByRole('button', { name: 'Toggle navigation' });
+  if (await toggle.isVisible()) {
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  }
+}
+
+test('E17 populated admin dashboard shows four counts and newest five, then refreshes after confirmed deletion', async ({ page }) => {
+  const errors = captureErrors(page);
+  await page.goto('/');
+  await login(page);
+  await page.getByRole('link', { name: 'Manage Users', exact: true }).click();
+  await createAccount(page, 'Overview Writer', 'user');
+  await expect(page.getByRole('status')).toHaveText('Account Overview Writer created.');
+  await createAccount(page, 'Overview Admin', 'admin');
+  await expect(page.getByRole('status')).toHaveText('Account Overview Admin created.');
+  await page.getByRole('link', { name: 'Back to Dashboard', exact: true }).click();
+
+  const creationOrder = [];
+  for (let index = 0; index < 7; index += 1) {
+    await openNavigation(page);
+    await page.getByRole('navigation', { name: 'Authenticated navigation' })
+      .getByRole('link', { name: 'Write', exact: true }).click();
+    const title = `Overview story ${index + 1}`;
+    await page.getByLabel('Title', { exact: false }).fill(title);
+    await page.getByLabel('Content', { exact: false }).fill(`Real UI-created overview content ${index + 1}.`);
+    await page.getByRole('button', { name: 'Save Post', exact: true }).click();
+    await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
+    const saved = (await stored(page)).posts.find((post) => post.title === title);
+    expect(saved).toMatchObject({ title, authorId: 'admin', authorName: 'Admin' });
+    expect(Number.isFinite(Date.parse(saved.createdAt))).toBe(true);
+    if (creationOrder.length) {
+      expect(Date.parse(saved.createdAt)).toBeGreaterThan(Date.parse(creationOrder.at(-1).createdAt));
+    }
+    creationOrder.push(saved);
+  }
+  expect((await stored(page)).posts).toHaveLength(7);
+  await page.getByRole('link', { name: 'WriteSpace.', exact: true }).click();
+  await page.getByRole('link', { name: 'Go to Dashboard', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Admin Dashboard', exact: true })).toBeVisible();
+  for (const [label, count] of [
+    ['Total Posts', 7],
+    ['Total Users', 3],
+    ['Total Admins', 2],
+    ['Total users (repeated)', 2],
+  ]) {
+    await expect(page.getByLabel(label, { exact: true }).getByText(String(count), { exact: true })).toBeVisible();
+  }
+  const recent = page.getByRole('region', { name: 'Recent posts' });
+  const titleLinks = recent.getByRole('link').filter({ hasNotText: /^Edit$/ });
+  await expect(recent.getByRole('listitem')).toHaveCount(5);
+  await expect(titleLinks).toHaveText(creationOrder.slice(-5).reverse().map((post) => post.title));
+  await expect(recent.getByRole('link', { name: creationOrder[0].title, exact: true })).toHaveCount(0);
+  await expect(recent.getByRole('link', { name: creationOrder[1].title, exact: true })).toHaveCount(0);
+  await capturePreflight(page, 'dashboard-seven-ui-created-posts');
+
+  const newest = creationOrder.at(-1);
+  page.once('dialog', async (dialog) => {
+    expect(dialog.type()).toBe('confirm');
+    expect(dialog.message()).toBe(`Delete "${newest.title}"? This cannot be undone.`);
+    await dialog.accept();
+  });
+  await recent.getByRole('button', { name: `Delete ${newest.title}`, exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Post deleted.');
+  expect((await stored(page)).posts).toEqual(creationOrder.slice(0, -1));
+  await expect(page.getByLabel('Total Posts', { exact: true }).getByText('6', { exact: true })).toBeVisible();
+  await expect(recent.getByRole('listitem')).toHaveCount(5);
+  await expect(titleLinks).toHaveText(creationOrder.slice(0, -1).slice(-5).reverse().map((post) => post.title));
+  await expect(recent.getByRole('link', { name: newest.title, exact: true })).toHaveCount(0);
+  for (const [label, count] of [['Total Users', 3], ['Total Admins', 2], ['Total users (repeated)', 2]]) {
+    await expect(page.getByLabel(label, { exact: true }).getByText(String(count), { exact: true })).toBeVisible();
+  }
+  expect(errors).toEqual([]);
+});
+
 /** Create an account from native required fields in either role.
  * @param {import('@playwright/test').Page} page Management page.
  * @param {string} name Unique account username/display name.

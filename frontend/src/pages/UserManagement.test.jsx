@@ -14,12 +14,28 @@ const account = { id: 'local', displayName: 'Local', username: 'local', password
  * @returns {object} Interaction driver and render handle.
  */
 function setup(session = admin) {
-  const view = render(<MemoryRouter initialEntries={['/users']}><Routes>
-    <Route path="/users" element={<UserManagement session={session} />} />
-    <Route path="/admin" element={<h1>Dashboard destination</h1>} />
-    <Route path="/blogs" element={<h1>Blogs destination</h1>} />
-    <Route path="/login" element={<h1>Login destination</h1>} />
-  </Routes></MemoryRouter>);
+  const view = render(
+    <MemoryRouter initialEntries={['/users']}>
+      <Routes>
+        <Route
+          path="/users"
+          element={<UserManagement session={session} />}
+        />
+        <Route
+          path="/admin"
+          element={<h1>Dashboard destination</h1>}
+        />
+        <Route
+          path="/blogs"
+          element={<h1>Blogs destination</h1>}
+        />
+        <Route
+          path="/login"
+          element={<h1>Login destination</h1>}
+        />
+      </Routes>
+    </MemoryRouter>,
+  );
   return { ...view, user: userEvent.setup() };
 }
 

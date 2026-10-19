@@ -32,7 +32,56 @@ function mutate(operation, session = owner) {
   return deletePost(session, existing.id);
 }
 
+// Representative large valid input, not an application size limit.
+const largeFields = {
+  title: 'Large valid title '.repeat(1024).trim(),
+  content: '  Large valid content\n\n'.repeat(16384),
+};
+
 describe('post business rules', () => {
+  it('creates large valid title and content with exact stored fields and ownership metadata', () => {
+    seed();
+    expect(validatePost(largeFields)).toEqual({});
+    const created = createPost(owner, largeFields);
+    const expected = {
+      id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i),
+      ...largeFields, createdAt: expect.any(String), authorId: owner.userId, authorName: owner.displayName,
+    };
+    expect(created).toEqual(expected);
+    expect(Number.isFinite(Date.parse(created.createdAt))).toBe(true);
+    expect(getPosts()).toEqual([existing, expected]);
+    expect(findPost(created.id)).toEqual(expected);
+    expect(canManagePost(owner, findPost(created.id))).toBe(true);
+    expect(canManagePost(other, findPost(created.id))).toBe(false);
+  });
+
+  it.each([owner, admin])('updates large valid title and content preserving exact stored ownership metadata for $role', (session) => {
+    const unrelated = { ...existing, id: 'unrelated', authorId: 'other' };
+    savePosts([existing, unrelated]);
+    expect(validatePost(largeFields)).toEqual({});
+    const expected = { ...existing, ...largeFields };
+    expect(updatePost(session, existing.id, largeFields)).toEqual(expected);
+    expect(getPosts()).toEqual([expected, unrelated]);
+    expect(findPost(existing.id)).toEqual(expected);
+    expect(canManagePost(owner, findPost(existing.id))).toBe(true);
+    expect(canManagePost(other, findPost(existing.id))).toBe(false);
+  });
+
+  it.each(['create', 'update'])('retains original records when a large valid %s payload encounters quota failure', (operation) => {
+    const unrelated = { ...existing, id: 'unrelated', authorId: 'other' };
+    savePosts([existing, unrelated]);
+    const raw = localStorage.getItem('writespace_posts');
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Full', 'QuotaExceededError');
+    });
+    expect(() => operation === 'create'
+      ? createPost(owner, largeFields)
+      : updatePost(owner, existing.id, largeFields)).toThrow('Could not save posts');
+    expect(localStorage.getItem('writespace_posts')).toBe(raw);
+    expect(getPosts()).toEqual([existing, unrelated]);
+    expect(findPost(existing.id)).toEqual(existing);
+    expect(findPost(unrelated.id)).toEqual(unrelated);
+  });
   it.each(['user', 'admin'])('creates a persisted UUID post for %s and rereads state without memory caching', (role) => {
     const session = role === 'admin' ? admin : owner;
     const record = createPost(session, { ...fields, title: ' A title ' });

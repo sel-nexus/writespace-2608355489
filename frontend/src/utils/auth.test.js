@@ -167,6 +167,69 @@ describe('login', () => {
   });
 });
 
+describe('large identity persistence', () => {
+  const largeFields = {
+    displayName: 'Writer 名 '.repeat(8192).trim(),
+    username: `writer-${'x'.repeat(65536)}`,
+    password: 'dummy-密碼 '.repeat(16384),
+  };
+  const largeAccounts = Array.from({ length: 128 }, (_, index) => ({
+    ...account, id: `writer-${index}`, username: `writer-${index}`, displayName: 'Existing Writer '.repeat(256),
+  }));
+
+  it('registers and logs in large valid values with exact account and session rereads', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-03-01T12:00:00.000Z'));
+    localStorage.setItem('writespace_users', JSON.stringify(largeAccounts));
+    const registered = register({ ...largeFields, confirmPassword: largeFields.password });
+    const expectedSession = {
+      userId: registered.userId, username: largeFields.username, displayName: largeFields.displayName, role: 'user',
+    };
+    const expectedUsers = [...largeAccounts, {
+      id: registered.userId, displayName: largeFields.displayName, username: largeFields.username,
+      password: largeFields.password, role: 'user', createdAt: '2025-03-01T12:00:00.000Z',
+    }];
+    const savedUsersRaw = JSON.stringify(expectedUsers);
+    expect(registered).toEqual(expectedSession);
+    expect(JSON.parse(localStorage.getItem('writespace_users'))).toEqual(expectedUsers);
+    expect(localStorage.getItem('writespace_users')).toBe(savedUsersRaw);
+    expect(localStorage.getItem('writespace_session')).toBe(JSON.stringify(expectedSession));
+    expect(getSession()).toEqual(expectedSession);
+    clearSession();
+    expect(getSession()).toBeNull();
+    expect(login(largeFields.username, largeFields.password)).toEqual(expectedSession);
+    expect(getSession()).toEqual(expectedSession);
+    expect(localStorage.getItem('writespace_session')).toBe(JSON.stringify(expectedSession));
+    expect(localStorage.getItem('writespace_users')).toBe(savedUsersRaw);
+    expect(JSON.parse(localStorage.getItem('writespace_users'))).toEqual(expectedUsers);
+  });
+
+  it.each(['register', 'login'])('retains exact existing data when a large %s write exceeds quota', (operation) => {
+    const largeAccount = { ...account, ...largeFields };
+    const existingUsers = operation === 'login' ? [...largeAccounts, largeAccount] : largeAccounts;
+    localStorage.setItem('writespace_users', JSON.stringify(existingUsers));
+    setSession(writer);
+    const usersRaw = localStorage.getItem('writespace_users');
+    const sessionRaw = localStorage.getItem('writespace_session');
+    const original = Storage.prototype.setItem;
+    const writes = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (key, value) {
+      if (value.length > 32768) throw new DOMException('Quota exceeded', 'QuotaExceededError');
+      return original.call(this, key, value);
+    });
+    const attempt = operation === 'register'
+      ? () => register({ ...largeFields, confirmPassword: largeFields.password })
+      : () => login(largeFields.username, largeFields.password);
+    expect(attempt).toThrow(operation === 'register' ? 'Could not save accounts' : 'Could not save session');
+    expect(writes).toHaveBeenCalledTimes(1);
+    expect(writes.mock.calls[0][0]).toBe(operation === 'register' ? 'writespace_users' : 'writespace_session');
+    expect(writes.mock.calls[0][1].length).toBeGreaterThan(32768);
+    expect(localStorage.getItem('writespace_users')).toBe(usersRaw);
+    expect(JSON.parse(localStorage.getItem('writespace_users'))).toEqual(existingUsers);
+    expect(localStorage.getItem('writespace_session')).toBe(sessionRaw);
+    expect(getSession()).toEqual(writer);
+  });
+});
+
 describe('registration', () => {
   it('saves a trimmed unique UUID writer with timestamp and reread session, ignoring a requested admin role', () => {
     vi.useFakeTimers();

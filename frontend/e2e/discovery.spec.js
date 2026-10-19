@@ -62,7 +62,14 @@ test('real stored posts show newest three and persist after link navigation', as
   await expect(latest.getByRole('article')).toHaveCount(3);
   await expect(latest.getByText('Stored words for edition 4.')).toBeVisible();
   await expect(latest.getByText('Feb 04, 2025')).toBeVisible();
-  await expect(page.getByRole('complementary').getByRole('link', { name: 'Browser story 4' })).toBeVisible();
+  await page.getByRole('complementary').getByRole('link', { name: 'Browser story 4' }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole('form', { name: 'Login', exact: true })).toBeVisible();
+  await page.getByRole('navigation', { name: 'Public navigation' }).getByRole('link', { name: 'WriteSpace.' }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(latest.getByRole('heading', { level: 3 })).toHaveText([
+    'Browser story 4', 'Browser story 3', 'Browser story 2',
+  ]);
   await latest.getByRole('link', { name: 'Browser story 4' }).click();
   await expect(page).toHaveURL(/\/login$/);
   await page.getByRole('navigation', { name: 'Public navigation' }).getByRole('link', { name: 'WriteSpace.' }).click();

@@ -115,6 +115,44 @@ describe('users service', () => {
     expect(writes).not.toHaveBeenCalled();
   });
 
+  it.each(['user', 'admin'])('U06 persists large exact strings and %s role, then preserves accounts on large quota failure', (role) => {
+    seed();
+    const largeFields = {
+      displayName: `  ${'Large Writer 文'.repeat(8192)}  `,
+      username: `  ${'large-writer-'.repeat(8192)}  `,
+      password: `  ${'demo password 🔒\n'.repeat(16384)}  `,
+      role,
+    };
+    const created = createUser(admin, largeFields);
+    expect(created.displayName).toBe(largeFields.displayName.trim());
+    expect(created.username).toBe(largeFields.username.trim());
+    expect(created.password).toBe(largeFields.password);
+    expect(created.role).toBe(role);
+    const previous = [account, created];
+    expect(getUsers()).toEqual(previous);
+    const raw = localStorage.getItem('writespace_users');
+    expect(JSON.parse(raw)).toEqual(previous);
+    expect(listAccounts(admin).slice(1)).toEqual(previous);
+
+    const writes = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Full', 'QuotaExceededError');
+    });
+    const rejectedFields = { ...largeFields, username: `${largeFields.username.trim()}-quota` };
+    expect(() => createUser(admin, rejectedFields)).toThrow('Could not save accounts');
+    expect(writes).toHaveBeenCalledWith('writespace_users', expect.any(String));
+    const attempted = JSON.parse(writes.mock.calls[0][1]);
+    expect(attempted.slice(0, 2)).toEqual(previous);
+    expect(attempted[2]).toMatchObject({
+      displayName: rejectedFields.displayName.trim(),
+      username: rejectedFields.username,
+      password: rejectedFields.password,
+      role,
+    });
+    expect(localStorage.getItem('writespace_users')).toBe(raw);
+    expect(getUsers()).toEqual(previous);
+    expect(listAccounts(admin).slice(1)).toEqual(previous);
+  });
+
   it.each(['create', 'delete'])('reports %s quota failure without false persistence', (operation) => {
     seed();
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('Full', 'QuotaExceededError'); });

@@ -165,6 +165,40 @@ describe('Navbar', () => {
 });
 
 describe('App and PublicNavbar role wiring', () => {
+  it.each([
+    ['/', null, 'Home'], ['/login', null, 'Login'], ['/register', null, 'Register'],
+    ['/blogs', writer, 'All Blogs'], ['/write', writer, 'Write New Post'],
+    ['/admin', admin, 'Admin Dashboard'], ['/users', admin, 'User Management'],
+    ['/unknown', null, 'Page not found'], ['/blog/missing', writer, 'Post not found'],
+    ['/edit/missing', writer, 'Post not found'],
+  ])('sets the browser title for %s', (route, session, label) => {
+    document.title = 'Stale title';
+    renderApp(route, session);
+    expect(document.title).toBe(`${label} | WriteSpace`);
+  });
+
+  it('updates stored post titles across reader, edit, save and return navigation', async () => {
+    const user = userEvent.setup();
+    const post = {
+      id: 'title / 名', title: 'Original story', content: 'Demo content',
+      authorId: writer.userId, authorName: writer.displayName, createdAt: '2025-03-01T12:00:00.000Z',
+    };
+    localStorage.setItem('writespace_posts', JSON.stringify([post]));
+    renderApp(`/blog/${encodeURIComponent(post.id)}`, writer);
+    expect(screen.getByRole('heading', { name: post.title })).toBeInTheDocument();
+    expect(document.title).toBe('Original story | WriteSpace');
+    await user.click(screen.getByRole('link', { name: 'Edit', exact: true }));
+    expect(screen.getByRole('form', { name: 'Edit Post' })).toBeInTheDocument();
+    expect(document.title).toBe('Edit: Original story | WriteSpace');
+    await user.clear(screen.getByLabelText('Title', { exact: false }));
+    await user.type(screen.getByLabelText('Title', { exact: false }), 'Revised story');
+    await user.click(screen.getByRole('button', { name: 'Save Post' }));
+    expect(screen.getByRole('heading', { name: 'Revised story' })).toBeInTheDocument();
+    expect(document.title).toBe('Revised story | WriteSpace');
+    await user.click(screen.getByRole('link', { name: 'Back to All Posts' }));
+    expect(document.title).toBe('All Blogs | WriteSpace');
+  });
+
   it.each([writer, admin])('shows $role public identity and dashboard destination', (session) => {
     render(
       <MemoryRouter>
@@ -188,7 +222,9 @@ describe('App and PublicNavbar role wiring', () => {
     renderApp(route);
     expect(screen.getByTestId('app-destination')).toHaveTextContent(/^\/login$/);
     expect(screen.getByRole('navigation', { name: 'Public navigation' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    expect(screen.getByRole('form', { name: 'Login' })).toBeInTheDocument();
+    expect(document.title).toBe('Login | WriteSpace');
     expect(screen.queryByRole('navigation', { name: 'Authenticated navigation' })).not.toBeInTheDocument();
   });
 
@@ -198,6 +234,7 @@ describe('App and PublicNavbar role wiring', () => {
   ])('redirects authenticated identity entry %s to role home', (route, session, home) => {
     renderApp(route, session);
     expect(screen.getByTestId('app-destination')).toHaveTextContent(home);
+    expect(document.title).toBe(session.role === 'admin' ? 'Admin Dashboard | WriteSpace' : 'All Blogs | WriteSpace');
     expect(screen.getByRole('navigation', { name: 'Authenticated navigation' })).toBeInTheDocument();
     if (session.role === 'admin') expect(screen.getByRole('link', { name: 'Users' })).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Public navigation' })).not.toBeInTheDocument();
@@ -214,8 +251,10 @@ describe('App and PublicNavbar role wiring', () => {
     const user = userEvent.setup();
     renderApp('/blogs', writer);
     const nav = screen.getByRole('navigation', { name: 'Authenticated navigation' });
+    expect(document.title).toBe('All Blogs | WriteSpace');
     await user.click(screen.getByRole('button', { name: 'Profile for Writer' }));
-    await user.click(screen.getByRole('link', { name: 'Write' }));
+    await user.click(within(nav).getByRole('link', { name: 'Write' }));
+    expect(document.title).toBe('Write New Post | WriteSpace');
     expect(screen.getByRole('navigation', { name: 'Authenticated navigation' })).toBe(nav);
     expect(screen.getByRole('button', { name: 'Profile for Writer' })).toHaveAttribute('aria-expanded', 'false');
     await user.click(screen.getByRole('button', { name: 'Profile for Writer' }));

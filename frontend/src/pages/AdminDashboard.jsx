@@ -57,24 +57,51 @@ export default function AdminDashboard({ session = null }) {
         <StatCard label="Total Admins" count={accounts.filter((account) => account.role === 'admin').length} accent="pink" />
         <StatCard label="Total users (repeated)" count={registered} accent="teal" />
       </section>
-      <p className="text-sm text-slate-500">Total Users includes the built-in account. The fourth card repeats the registered-users count; the requested duplication is retained explicitly.</p>
+      <p className="text-sm text-slate-500">
+        Total Users includes the built-in account. The fourth card repeats the registered-users count; the requested duplication is retained explicitly.
+      </p>
       <nav aria-label="Quick actions" className="flex flex-col gap-3 sm:flex-row">
         <Link to="/write" className={buttonStyles.primary}>Write New Post</Link>
         <Link to="/users" className={buttonStyles.secondary}>Manage Users</Link>
       </nav>
       <section aria-labelledby="recent-posts-heading" className="space-y-4">
         <h2 id="recent-posts-heading" className={`${displayFont} text-2xl text-slate-900`}>Recent posts</h2>
-        {posts.length === 0 ? <p className="rounded-2xl border border-slate-200 bg-white p-8 text-slate-600">No posts yet. Write your first post to get started.</p> : (
+        {posts.length === 0 ? (
+          <p className="rounded-2xl border border-slate-200 bg-white p-8 text-slate-600">
+            No posts yet. Write your first post to get started.
+          </p>
+        ) : (
           <ul className="space-y-3">
             {posts.slice(0, 5).map((post) => (
-              <li key={post.id} className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
+              <li
+                key={post.id}
+                className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
+              >
                 <div className="min-w-0">
-                  <Link to={`/blog/${encodeURIComponent(post.id)}`} className="break-words font-semibold text-indigo-700 underline decoration-indigo-200 underline-offset-4">{post.title}</Link>
+                  <Link
+                    to={`/blog/${encodeURIComponent(post.id)}`}
+                    className="break-words font-semibold text-indigo-700 underline decoration-indigo-200 underline-offset-4"
+                  >
+                    {post.title}
+                  </Link>
                   <p className="mt-2 text-sm text-slate-500">{post.authorName} · {formatPostDate(post.createdAt)}</p>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <Link to={`/edit/${encodeURIComponent(post.id)}`} aria-label={`Edit ${post.title}`} className={buttonStyles.secondary}>Edit</Link>
-                  <button type="button" aria-label={`Delete ${post.title}`} onClick={() => removePost(post)} className={buttonStyles.destructive}>Delete</button>
+                  <Link
+                    to={`/edit/${encodeURIComponent(post.id)}`}
+                    aria-label={`Edit ${post.title}`}
+                    className={buttonStyles.secondary}
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    type="button"
+                    aria-label={`Delete ${post.title}`}
+                    onClick={() => removePost(post)}
+                    className={buttonStyles.destructive}
+                  >
+                    Delete
+                  </button>
                 </div>
               </li>
             ))}
