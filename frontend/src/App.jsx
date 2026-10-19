@@ -55,7 +55,7 @@ export default function App() {
   const recoverableContent = (
     <main id="main-content" className="mx-auto max-w-6xl px-6 py-24">
       <h1 className={`${displayFont} text-4xl text-slate-900`}>Page not found</h1>
-      <p className="my-6 text-slate-600">This destination is not available in the current slice.</p>
+      <p className="my-6 text-slate-600">This page does not exist. Return home to continue reading or writing.</p>
       <Link to="/" className={buttonStyles.primary}>Back to Home</Link>
     </main>
   );

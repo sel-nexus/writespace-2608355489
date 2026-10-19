@@ -62,7 +62,9 @@ export default function LandingPage({ session = null }) {
                   <span className="text-xs text-indigo-700">Your browser’s bookshelf</span>
                 </div>
                 {posts.length > 0 ? (
-                  <div className="motion-safe:animate-[bounce_6s_ease-in-out_1] hover:[animation-play-state:paused] focus-within:[animation-play-state:paused]">
+                  <div
+                    className="motion-safe:animate-[bounce_6s_ease-in-out_1] hover:[animation-play-state:paused] focus-within:[animation-play-state:paused]"
+                  >
                     <BlogCard post={posts[0]} />
                   </div>
                 ) : (

@@ -17,3 +17,5 @@ graphify-out/cache/
 graphify-out/cost.json
 frontend/test-results/
 frontend/playwright-report/
+frontend/evidence/
+browser-evidence.zip
